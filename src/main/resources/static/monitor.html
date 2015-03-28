@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trade monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/0.3.4/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script type="text/javascript">
+        var stompClient = null;
+
+        function setConnected(connected) {
+            document.getElementById('conversationDiv').style.visibility = connected ? 'visible' : 'hidden';
+        }
+
+        function connect() {
+            var socket = new SockJS('/statusChannel');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+                setConnected(true);
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/statusUpdate', function(update){
+                    renderMessage(JSON.parse(update.body));
+                });
+            });
+        }
+
+        function disconnect() {
+            if (stompClient != null) {
+                stompClient.disconnect();
+            }
+            setConnected(false);
+            console.log("Disconnected");
+        }
+
+        function renderMessage(message) {
+        
+        	var volumneMap = message.volumeByCurrencyPair;
+        	var volumeHTML  = "";
+        	for(var pair in volumneMap)
+        	{
+        		volumeHTML += pair + " = " + volumneMap[pair] + "<br>";
+        	}
+        	
+            document.getElementById('trade_count').innerHTML = message.tradeCount;
+            document.getElementById('volume_map').innerHTML = volumeHTML;        
+        }
+    </script>
+</head>
+<body onload="connect()">
+
+<div>
+    <div id="conversationDiv">
+        <div> Trade count =  <span id="trade_count">0</span> </div>
+        
+        <div> Volume map :</div>
+        
+        <div id="volume_map"> </div>
+    </div>
+</div>
+</body>
+</html>
